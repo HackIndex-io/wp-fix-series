@@ -1,0 +1,141 @@
+name: Release
+
+# Builds a release when the Version header of the main plugin file changes, or when started by hand.
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - '*.php'
+      - '.github/workflows/release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Read plugin header
+        id: plugin
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          slug="${GITHUB_REPOSITORY#*/}"
+          header='^[[:space:]/*#@]*'
+
+          main=""
+          if [ -f "$slug.php" ] && grep -qE "${header}Plugin Name:" "$slug.php"; then
+            main="$slug.php"
+          else
+            main="$(grep -lE "${header}Plugin Name:" ./*.php 2> /dev/null | sed -n '1s|^\./||p' || true)"
+          fi
+          if [ -z "$main" ]; then
+            echo "::error::No PHP file with a Plugin Name header in the repo root"
+            exit 1
+          fi
+
+          field() {
+            grep -m1 -E "${header}$2:" "$1" | tr -d '\r' | sed -E "s|${header}$2:[[:space:]]*||; s|[[:space:]]*$||" || true
+          }
+          version="$(field "$main" 'Version')"
+          name="$(field "$main" 'Plugin Name')"
+
+          if ! printf '%s' "$version" | grep -qE '^[0-9][0-9A-Za-z.+-]*$'; then
+            echo "::error file=$main::Invalid or missing Version header: '$version'"
+            exit 1
+          fi
+
+          if [ -f readme.txt ]; then
+            stable="$(field readme.txt 'Stable tag')"
+            if [ -n "$stable" ] && [ "$stable" != "$version" ]; then
+              echo "::error file=readme.txt::Stable tag $stable does not match Version $version in $main"
+              exit 1
+            fi
+          fi
+
+          exists=false
+          if gh release view "v$version" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            exists=true
+            echo "Release v$version already exists, nothing to do"
+          fi
+
+          {
+            echo "slug=$slug"
+            echo "main=$main"
+            echo "version=$version"
+            echo "name=$name"
+            echo "exists=$exists"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Lint PHP
+        if: steps.plugin.outputs.exists == 'false'
+        run: |
+          php --version | head -n1
+          find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
+
+      - name: Build zip
+        if: steps.plugin.outputs.exists == 'false'
+        env:
+          SLUG: ${{ steps.plugin.outputs.slug }}
+        run: |
+          # export-ignore entries in .gitattributes are left out as well
+          git archive --format=zip --prefix="$SLUG/" -o "$SLUG.zip" HEAD -- . \
+            ':(exclude).github' ':(exclude).gitattributes' ':(exclude).gitignore' ':(exclude).distignore'
+          unzip -l "$SLUG.zip"
+
+      - name: Create release
+        if: steps.plugin.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SLUG: ${{ steps.plugin.outputs.slug }}
+          VERSION: ${{ steps.plugin.outputs.version }}
+          NAME: ${{ steps.plugin.outputs.name }}
+        run: |
+          changelog=""
+          if [ -f readme.txt ]; then
+            changelog="$(tr -d '\r' < readme.txt | awk -v v="$VERSION" '
+              /^== / { inlog = (tolower($0) ~ /^== *changelog *==/); next }
+              inlog && /^= / {
+                if (found) { exit }
+                t = $0
+                sub(/^= *([vV]ersion *)?[vV]?/, "", t)
+                split(t, part, " ")
+                if (part[1] == v) { found = 1 }
+                next
+              }
+              found { print }
+            ')"
+          fi
+          upstream="$(gh api "repos/$GITHUB_REPOSITORY" -q '.parent.html_url // empty')"
+
+          {
+            if [ -n "$changelog" ]; then
+              echo "## Changes"
+              echo
+              printf '%s\n' "$changelog"
+              echo
+            fi
+            echo "## Install"
+            echo
+            echo "Download \`$SLUG.zip\` below, upload it in **Plugins > Add New > Upload Plugin** and choose **Replace current with uploaded**. Don't delete the original plugin first, its uninstall can remove your settings."
+            if [ -n "$upstream" ]; then
+              echo
+              echo "Unofficial security fork of $upstream, maintained by HackIndex for security fixes only."
+            fi
+          } > notes.md
+          cat notes.md
+
+          gh release create "v$VERSION" "$SLUG.zip" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$NAME $VERSION" \
+            --notes-file notes.md
