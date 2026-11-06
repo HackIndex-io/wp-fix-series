@@ -97,5 +97,6 @@ function the_series_shortcode( $attr ) {
 		'the-series'
 	);
 
-	return get_the_term_list( get_the_ID(), 'series', $attr['before'], $attr['separator'], $attr['after'] );
+	// The shortcode parser runs stripcslashes() on attributes, so \x3c can still produce HTML after kses
+	return get_the_term_list( get_the_ID(), 'series', wp_kses_post( $attr['before'] ), wp_kses_post( $attr['separator'] ), wp_kses_post( $attr['after'] ) );
 }
