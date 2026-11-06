@@ -7,6 +7,8 @@
  * @copyright Copyright (c) 2009 - 2018, Justin Tadlock
  * @link      https://themehybrid.com/plugins/series
  * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ *
+ * Modified by HackIndex on 2026-11-06: security fixes. Fork of https://github.com/justintadlock/series
  */
 
 namespace Series;

@@ -1,13 +1,15 @@
 <?php
 /**
- * Plugin Name: Series
+ * Plugin Name: Series (HackIndex Patched)
  * Plugin URI:  https://themehybrid.com/plugins/series
- * Description: Plugin that allows you to collect posts in a series.
- * Version:     2.0.1
+ * Description: Plugin that allows you to collect posts in a series. (HackIndex Patched)
+ * Version:     2.0.2
  * Author:      Justin Tadlock
  * Author URI:  https://themehybrid.com
  * Text Domain: series
  * Domain Path: /lang
+ * License:     GPLv2 or later
+ * License URI: http://www.gnu.org/licenses/gpl-2.0.html
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU
  * General Public License as published by the Free Software Foundation; either version 2 of the License,
@@ -24,6 +26,8 @@
  * @copyright Copyright (c) 2009 - 2018, Justin Tadlock
  * @link      https://themehybrid.com/plugins/series
  * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ *
+ * Modified by HackIndex on 2026-11-06: security fixes. Fork of https://github.com/justintadlock/series
  */
 
 namespace Series;

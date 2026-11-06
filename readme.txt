@@ -1,18 +1,28 @@
-=== Series ===
+=== Series (HackIndex Patched) ===
 
-Contributors: greenshady
+Contributors: greenshady, joshuavanderpoll
 Donate link: https://themehybrid.com/donate
 Tags: series, widgets, shortcodes
 Requires at least: 4.8
-Tested up to: 5.0.2
+Tested up to: 7.1
 Requires PHP: 5.3
-Stable tag: 2.0.1
+Stable tag: 2.0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Plugin that allows you to collect posts in a series.
+Plugin that allows you to collect posts in a series. (HackIndex Patched)
 
 == Description ==
+
+= HackIndex Patched fork =
+This is an unofficial fork of Series by Justin Tadlock. The original plugin is no longer maintained and its latest release (2.0.1) has a [known vulnerability](https://www.wordfence.com/threat-intel/vulnerabilities/id/935b5620-40d8-40ef-99f3-260e6f49f84c). HackIndex maintains this fork for security fixes only.
+
+* We fix security issues and keep the plugin working on current WordPress and PHP versions. We do not add features or change how the plugin works.
+* It is a drop-in replacement: same plugin folder, taxonomy, settings, widgets and shortcodes, so your series keep working.
+* HackIndex is not affiliated with or endorsed by Justin Tadlock or Theme Hybrid. Please do not contact the original author for support with this fork, open an issue on the fork instead.
+* Original plugin: [WordPress.org](https://wordpress.org/plugins/series/) and [GitHub](https://github.com/justintadlock/series) by Justin Tadlock.
+* HackIndex fork and issues: [github.com/HackIndex-io/series](https://github.com/HackIndex-io/series)
+* Licensed under the GPLv2 or later, like the original, and provided without any warranty.
 
 Series is a plugin created to allow users to easily link posts together by using a WordPress taxonomy (like tags or categories) called "series".  It can be particularly useful if you write several posts spanning the same topic and want them tied together in some way that tags or categories doesn't cover.
 
@@ -107,3 +117,7 @@ If upgrading from a version earlier than 0.2.0, be sure to check your widgets.  
 == Changelog ==
 
 Please see the `changelog.md` file included with the plugin.  Or, you can view the [online change log](https://github.com/justintadlock/series/blob/master/changelog.md).
+
+= 2.0.2 =
+* Security: fixed Contributor+ stored Cross-Site Scripting ([CVE-2025-62759](https://www.cve.org/CVERecord?id=CVE-2025-62759), [Wordfence advisory](https://www.wordfence.com/threat-intel/vulnerabilities/id/935b5620-40d8-40ef-99f3-260e6f49f84c)) in the `[the-series]` shortcode. The `before`, `after` and `separator` attributes could contain encoded HTML (`\x3c`) that the shortcode parser turned into script tags after kses filtering. They are now filtered with `wp_kses_post()` on output.
+* Tested with WordPress 7.1 and PHP 8.0 to 8.5

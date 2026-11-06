@@ -1,5 +1,11 @@
 # Change Log
 
+## [2.0.2] - 2026-11-06
+
+### Security
+
+* Fixed Contributor+ stored Cross-Site Scripting ([CVE-2025-62759](https://www.cve.org/CVERecord?id=CVE-2025-62759), [Wordfence advisory](https://www.wordfence.com/threat-intel/vulnerabilities/id/935b5620-40d8-40ef-99f3-260e6f49f84c)) in the `[the-series]` shortcode. The `before`, `after` and `separator` attributes are now filtered with `wp_kses_post()`. (HackIndex Patched fork)
+
 ## [2.0.1] - 2018-12-17
 
 ### Fixed
